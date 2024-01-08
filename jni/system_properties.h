@@ -96,16 +96,13 @@ typedef struct prop_info
         return true;
     }
 
-    bool set_value(const char *prop_value)
+    bool set_value(const char *new_value)
     {
-        if (prop_value == NULL || strncmp(prop_value, value, PROP_VALUE_MAX) == 0)
+        if (new_value == NULL || strncmp(new_value, value, PROP_VALUE_MAX) == 0)
             return false;
 
-        uint8_t valuelen = strlen(prop_value);
-        memset(value, 0, strlen(value));
-        memcpy(value, prop_value, valuelen);
-        value[valuelen] = '\0';
-        serial = serial & 0xFFFFFF | valuelen << 24;
+        strncpy(value, new_value, sizeof(value));
+        serial = serial & 0xFFFFFF | strlen(new_value) << 24;
         return true;
     }
 

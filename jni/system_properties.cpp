@@ -647,7 +647,7 @@ static void usage()
             "  -l log_level:        console = 1(default) logcat = 2  console + logcat = 3\n"
             "  -s                   print security context(selabel)\n"
             "  -f                   read property_contexts files to get security context\n"
-            "  -y                   auto confirm\n"
+            "  -y                   auto confirm for new property\n"
             "  -v                   verbose mode\n\n"
             "use leading/trailing '*' for wildcard match, or \"all\" to match all props\n");
 }
