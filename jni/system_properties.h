@@ -102,6 +102,7 @@ typedef struct prop_info
             return false;
 
         uint8_t valuelen = strlen(prop_value);
+        memset(value, 0, strlen(value));
         memcpy(value, prop_value, valuelen);
         value[valuelen] = '\0';
         serial = serial & 0xFFFFFF | valuelen << 24;

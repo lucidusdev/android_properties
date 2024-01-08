@@ -452,7 +452,7 @@ int cmp_prop_name(const char *one, uint8_t one_len, const char *two, uint8_t two
         return strncmp(one, two, one_len);
 }
 
-prop_info *find_prop_info(prop_area *area, const char *prop_name, bool need_add)
+ prop_info *find_prop_info(prop_area *area, const char *prop_name, bool need_add, bool need_confirm_add = true)
 {
     if (area == NULL || strlen(prop_name) == 0)
     {
@@ -473,7 +473,17 @@ prop_info *find_prop_info(prop_area *area, const char *prop_name, bool need_add)
 
         if (p_bt == NULL && need_add)
         {
-            p_bt = new_prop_bt(area, remain_name, substr_size, &prev_bt->children);
+            if (need_confirm_add) {
+                char ans;
+                printf("prop [%s] doesn't exist, create it? y*/n\n", prop_name);
+                ans = getchar();
+                if (ans == 'n' || ans == 'N')
+                    return NULL;
+                else
+                    p_bt = new_prop_bt(area, remain_name, substr_size, &prev_bt->children);
+            } else {
+                p_bt = new_prop_bt(area, remain_name, substr_size, &prev_bt->children);
+            }            
         }
 
         prop_bt *current = NULL;
