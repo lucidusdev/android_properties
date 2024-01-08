@@ -306,7 +306,7 @@ char *get_security_context(char *prop_name)
     }
 }
 
-void recursive(prop_area *p_area, uint32_t off)
+void recursive(prop_area *p_area, uint32_t off, const char *file_name = NULL)
 {
     prop_bt *p_bt = get_prop_bt(p_area, off);
     if (p_bt == NULL)
@@ -322,23 +322,23 @@ void recursive(prop_area *p_area, uint32_t off)
             content.name = std::string(p_info->name);
             content.value = std::string(p_info->value);
             content.serial = p_info->serial;
-            if (get_security_context(p_info->name) != NULL)
-                content.security = std::string(get_security_context(p_info->name));
+            if (file_name != NULL)
+                content.security = std::string(file_name).substr(strlen(PROPERTIES_FILE) + 1);
             prop_all.push_back(content);
             // print_log("%s", content.to_string().c_str());
         }
     }
     if (p_bt->left != 0)
     {
-        recursive(p_area, p_bt->left);
+        recursive(p_area, p_bt->left, file_name);
     }
     if (p_bt->right != 0)
     {
-        recursive(p_area, p_bt->right);
+        recursive(p_area, p_bt->right, file_name);
     }
     if (p_bt->children != 0)
     {
-        recursive(p_area, p_bt->children);
+        recursive(p_area, p_bt->children, file_name);
     }
 }
 
@@ -349,7 +349,7 @@ bool dump_properties_from_file(const char *file_name)
     {
         return false;
     }
-    recursive(p_area, 0);
+    recursive(p_area, 0, file_name);
 
     return true;
 }
@@ -452,7 +452,7 @@ int cmp_prop_name(const char *one, uint8_t one_len, const char *two, uint8_t two
         return strncmp(one, two, one_len);
 }
 
- prop_info *find_prop_info(prop_area *area, const char *prop_name, bool need_add, bool need_confirm_add = true)
+ prop_info *find_prop_info(prop_area *area, const char *prop_name, bool need_add, bool need_confirm = true)
 {
     if (area == NULL || strlen(prop_name) == 0)
     {
@@ -473,7 +473,7 @@ int cmp_prop_name(const char *one, uint8_t one_len, const char *two, uint8_t two
 
         if (p_bt == NULL && need_add)
         {
-            if (need_confirm_add) {
+            if (need_confirm) {
                 char ans;
                 printf("prop [%s] doesn't exist, create it? y*/n\n", prop_name);
                 ans = getchar();
@@ -576,7 +576,7 @@ int cmp_prop_name(const char *one, uint8_t one_len, const char *two, uint8_t two
     return NULL;
 }
 
-void get_or_set_property_value_count(const char *prop_name, const char *prop_value, uint32_t prop_count)
+void get_or_set_property_value_count(const char *prop_name, const char *prop_value, uint32_t prop_count, bool need_confirm)
 {
     prop_area *p_area = NULL;
     bool need_write = prop_value != NULL || prop_count != PROP_COUNT_MAX;
@@ -614,7 +614,7 @@ void get_or_set_property_value_count(const char *prop_name, const char *prop_val
 
         p_area = map_prop_area(context_file, need_write);
     }
-    prop_info *p_info = find_prop_info(p_area, prop_name, need_write);
+    prop_info *p_info = find_prop_info(p_area, prop_name, need_write, need_confirm);
     if (p_info != NULL)
     {
         if (need_write)
@@ -641,12 +641,13 @@ void get_or_set_property_value_count(const char *prop_name, const char *prop_val
 static void usage()
 {
     fprintf(stderr,
-            "usage: system_properties [-h] [-c] [-l log_level] [-s] [-f] [-v] prop_name prop_value new_count*\n"
+            "usage: system_properties [-h] [-c] [-l log_level] [-s] [-f] [-y] [-v] prop_name prop_value new_count*\n"
             "  -h:                  display this help message\n"
             "  -c:                  set count\n"
             "  -l log_level:        console = 1(default) logcat = 2  console + logcat = 3\n"
             "  -s                   print security context(selabel)\n"
             "  -f                   read property_contexts files to get security context\n"
+            "  -y                   auto confirm\n"
             "  -v                   verbose mode\n\n"
             "use leading/trailing '*' for wildcard match, or \"all\" to match all props\n");
 }
@@ -657,6 +658,7 @@ int main(int argc, char *argv[])
     char *prop_name = NULL;
     char *prop_value = NULL;
     uint32_t prop_count = PROP_COUNT_MAX;
+    bool need_confirm = true;
 
     for (;;)
     {
@@ -697,6 +699,9 @@ int main(int argc, char *argv[])
         case 'f':
             g_use_file = true;
             break;
+        case 'y':
+            need_confirm = false;
+            break;            
         case 'v':
             g_verbose_mode = true;
             break;
@@ -777,7 +782,7 @@ int main(int argc, char *argv[])
         for (auto &p : prop_all)
         {
             if (prop_count != PROP_COUNT_MAX)
-                get_or_set_property_value_count(p.name.c_str(), NULL, prop_count);
+                get_or_set_property_value_count(p.name.c_str(), NULL, prop_count, need_confirm);
             else
                 //print_log("%s\n", p.to_string().c_str());
                 p.output();
@@ -785,7 +790,7 @@ int main(int argc, char *argv[])
     }
     else
     {
-        get_or_set_property_value_count(prop_name, prop_value, prop_count);
+        get_or_set_property_value_count(prop_name, prop_value, prop_count, need_confirm);
     }
 
     cleanup_resource();

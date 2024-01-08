@@ -148,7 +148,7 @@ struct prop_content
         if (g_verbose_mode)
             print_log(" serial: 0x%08X",  serial);
         if (!security.empty())
-            print_log(" s_context: %s", security.c_str());
+            print_log(" context: [%s]", security.c_str());
         print_log("\n");
     }
     uint32_t get_count() {return serial & PROP_COUNT_MAX;}
