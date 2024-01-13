@@ -322,7 +322,7 @@ void recursive(prop_area *p_area, uint32_t off, const char *file_name = NULL)
             content.name = std::string(p_info->name);
             content.value = std::string(p_info->value);
             content.serial = p_info->serial;
-            if (file_name != NULL)
+            if (file_name != NULL && g_need_security_context)
                 content.security = std::string(file_name).substr(strlen(PROPERTIES_FILE) + 1);
             prop_all.push_back(content);
             // print_log("%s", content.to_string().c_str());
@@ -622,12 +622,15 @@ void get_or_set_property_value_count(const char *prop_name, const char *prop_val
             if (p_info->update_value_count(prop_value, prop_count))
             {
                 if (g_verbose_mode)
-                    print_log("set %s == %s, valuelen %d\n", prop_name, p_info->value, p_info->serial >> 24);
+                    print_log("set %s -> %s, valuelen %d count %d\n", prop_name, p_info->value, 
+                                p_info->serial >> 24, p_info->get_count());
                 else
                     print_log("set ");
             }
         }
-        print_log("[%s]: [%s] count %d", p_info->name, p_info->value, p_info->get_count());
+        print_log("[%s]: [%s]", p_info->name, p_info->value);
+        if (p_info->get_count() || prop_count != PROP_COUNT_MAX || g_verbose_mode)
+            print_log(" count %d", p_info->get_count());            
         if (g_verbose_mode)
             print_log(" serial 0x%08X",  p_info->serial);
         if (g_need_security_context)
